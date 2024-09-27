@@ -1,6 +1,6 @@
 ## BTech Project- EO and EC MSE Calculation using KNN and GBR Models
-EO (eV): Adsorption energy of O atom on the catalyst surface.
-EC (eV): Adsorption energy of C atom on the catalyst surface.
+- EO (eV): Adsorption energy of O atom on the catalyst surface.
+- EC (eV): Adsorption energy of C atom on the catalyst surface.
 ==============================================
 ## Technologies & Tools Used
 - Python
