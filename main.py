@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import OneHotEncoder
 import seaborn as sns
 
-# Embedded data from EoEv.csv
 eo_ev_list = [
     {'Host Element': 'Fe', 'Dopant Element': 'V', 'EO (eV)': -7.11, 'EC (eV)': -6.82},
     {'Host Element': 'Fe', 'Dopant Element': 'Fe', 'EO (eV)': -5.86, 'EC (eV)': -6.51},
@@ -27,29 +26,23 @@ eo_ev_list = [
     {'Host Element': 'Fe', 'Dopant Element': 'Re', 'EO (eV)': -6.95, 'EC (eV)': -7.48}
 ]
 
-# Convert the list of dictionaries to DataFrame
 eo_ev_data = pd.DataFrame(eo_ev_list)
 
-# One-hot encode the categorical columns
 encoder_host = OneHotEncoder(sparse_output=False)
 encoder_dopant = OneHotEncoder(sparse_output=False)
 
 encoded_host = encoder_host.fit_transform(eo_ev_data[['Host Element']])
 encoded_dopant = encoder_dopant.fit_transform(eo_ev_data[['Dopant Element']])
 
-# Create DataFrames from the encoded data
 encoded_host_df = pd.DataFrame(encoded_host, columns=encoder_host.get_feature_names_out(['Host Element']))
 encoded_dopant_df = pd.DataFrame(encoded_dopant, columns=encoder_dopant.get_feature_names_out(['Dopant Element']))
 
-# Concatenate the encoded columns with the original DataFrame
 eo_ev_data_encoded = pd.concat([encoded_host_df, encoded_dopant_df, eo_ev_data[['EO (eV)', 'EC (eV)']]], axis=1)
 
-# Split the data into features and target variables
 X = eo_ev_data_encoded.drop(columns=['EO (eV)', 'EC (eV)'])
 y_EO = eo_ev_data_encoded['EO (eV)']
 y_EC = eo_ev_data_encoded['EC (eV)']
 
-# Function to calculate MSE for a given model and target variable
 def calculate_mse(model, X_train, X_test, y_train, y_test):
     model.fit(X_train, y_train)
     y_train_pred = model.predict(X_train)
@@ -58,46 +51,39 @@ def calculate_mse(model, X_train, X_test, y_train, y_test):
     mse_test = mean_squared_error(y_test, y_test_pred)
     return mse_train, mse_test
 
-# Split the data into training and testing sets
 X_train, X_test, y_EO_train, y_EO_test = train_test_split(X, y_EO, test_size=0.2, random_state=42)
 _, _, y_EC_train, y_EC_test = train_test_split(X, y_EC, test_size=0.2, random_state=42)
 
-# Define hyperparameter ranges for KNN and GBR
 param_grid_knn = {
-    'n_neighbors': [6],  # number of nearest neighbors
-    'weights': ['uniform', 'distance']  # weights
+    'n_neighbors': [6], 
+    'weights': ['uniform', 'distance']  
 }
 
 param_grid_gbr = {
-    'n_estimators': [100],  # number of decision trees
-    'learning_rate': [0.1,],  # learning rate
-    'max_depth': [3],  # maximum depth of the tree
+    'n_estimators': [100], 
+    'learning_rate': [0.1,],  
+    'max_depth': [3],  
     'random_state': [42]
 }
 
-# Initialize the models
 knn_model = KNeighborsRegressor()
 gbr_model = GradientBoostingRegressor()
 
-# Perform hyperparameter tuning using GridSearchCV for EO
 grid_search_knn_EO = GridSearchCV(knn_model, param_grid_knn, cv=5, scoring='neg_mean_squared_error')
 grid_search_gbr_EO = GridSearchCV(gbr_model, param_grid_gbr, cv=5, scoring='neg_mean_squared_error')
 
 grid_search_knn_EO.fit(X_train, y_EO_train)
 grid_search_gbr_EO.fit(X_train, y_EO_train)
 
-# Perform hyperparameter tuning using GridSearchCV for EC
 grid_search_knn_EC = GridSearchCV(knn_model, param_grid_knn, cv=5, scoring='neg_mean_squared_error')
 grid_search_gbr_EC = GridSearchCV(gbr_model, param_grid_gbr, cv=5, scoring='neg_mean_squared_error')
 
 grid_search_knn_EC.fit(X_train, y_EC_train)
 grid_search_gbr_EC.fit(X_train, y_EC_train)
 
-# Evaluate the models for EO
 mse_EO_knn_train, mse_EO_knn_test = calculate_mse(grid_search_knn_EO.best_estimator_, X_train, X_test, y_EO_train, y_EO_test)
 mse_EO_gbr_train, mse_EO_gbr_test = calculate_mse(grid_search_gbr_EO.best_estimator_, X_train, X_test, y_EO_train, y_EO_test)
 
-# Evaluate the models for EC
 mse_EC_knn_train, mse_EC_knn_test = calculate_mse(grid_search_knn_EC.best_estimator_, X_train, X_test, y_EC_train, y_EC_test)
 mse_EC_gbr_train, mse_EC_gbr_test = calculate_mse(grid_search_gbr_EC.best_estimator_, X_train, X_test, y_EC_train, y_EC_test)
 
@@ -110,35 +96,30 @@ print(f'MSE EC (KNN) Test: {mse_EC_knn_test:.2f}')
 print(f'MSE EC (GBR) Train: {mse_EC_gbr_train:.2f}')
 print(f'MSE EC (GBR) Test: {mse_EC_gbr_test:.2f}')
 
-# Plot the results
 fig, ax = plt.subplots(1, 2, figsize=(14, 6))
 
 labels = ['KNN Train', 'KNN Test', 'GBR Train', 'GBR Test']
 eo_values = [mse_EO_knn_train, mse_EO_knn_test, mse_EO_gbr_train, mse_EO_gbr_test]
 ec_values = [mse_EC_knn_train, mse_EC_knn_test, mse_EC_gbr_train, mse_EC_gbr_test]
 
-# Plot EO (eV) Model Comparison
 bars1 = ax[0].bar(labels, eo_values, color=['blue', 'lightblue', 'green', 'lightgreen'])
 ax[0].set_xlabel('Model')
-ax[0].set_ylabel('Mean Squared Error')
-ax[0].set_title('EO (eV) Model Comparison')
-ax[0].set_ylim(0, max(max(eo_values), max(ec_values)) + 0.1)  # Set y-axis limit
+ax[0].set_ylabel('Root Mean Squared Error')
+ax[0].set_title('Eo (eV) Model Comparison')
+ax[0].set_ylim(0, max(max(eo_values), max(ec_values)) + 0.1) 
 ax[0].grid(True, which='both', linestyle='--', linewidth=0.5)
 
-# Add annotations
 for bar in bars1:
     yval = bar.get_height()
     ax[0].text(bar.get_x() + bar.get_width()/2, yval + 0.02, round(yval, 2), ha='center', va='bottom')
 
-# Plot EC (eV) Model Comparison
 bars2 = ax[1].bar(labels, ec_values, color=['blue', 'lightblue', 'green', 'lightgreen'])
 ax[1].set_xlabel('Model')
-ax[1].set_ylabel('Mean Squared Error')
-ax[1].set_title('EC (eV) Model Comparison')
-ax[1].set_ylim(0, max(max(eo_values), max(ec_values)) + 0.1)  # Set y-axis limit
+ax[1].set_ylabel('Root Mean Squared Error')
+ax[1].set_title('Ec (eV) Model Comparison')
+ax[1].set_ylim(0, max(max(eo_values), max(ec_values)) + 0.1)  
 ax[1].grid(True, which='both', linestyle='--', linewidth=0.5)
 
-# Add annotations
 for bar in bars2:
     yval = bar.get_height()
     ax[1].text(bar.get_x() + bar.get_width()/2, yval + 0.02, round(yval, 2), ha='center', va='bottom')
@@ -146,7 +127,6 @@ for bar in bars2:
 plt.tight_layout()
 plt.show()
 
-# Provided data as a string
 data = """
 Dopant Element,Atomic Number,Atomic Mass (amu),Group,Electronegativity,Melting Point,Boiling Point,Heat of Fusion,Ionisation Energy,Number of d electrons,d-band filling,Surface energy,Wigner-Seitz Radius,d-band centre
 Sc,21,44.956,3,1.36,1814,3109,14.1,633.09,1,0.2,1.275,3.43,1.85
@@ -170,54 +150,43 @@ Ir,77,192.217,9,2.20,2719,4701,26.1,865.19,7,0.8,3.024,2.84,-2.11
 Pt,78,195.084,10,2.20,2041,4098,19.6,864.39,9,0.9,2.482,2.90,-2.25
 Au,79,196.967,11,2.40,1337,3109,13.2,890.13,10,1.0,1.503,3.00,-3.56
 """
-# Convert the data string into a pandas DataFrame
+
 from io import StringIO
 df = pd.read_csv(StringIO(data))
 
-# Assuming X and y are your features and target variables
-# For demonstration, let's create some dummy data
-X = df.drop(columns=['Dopant Element'])
-y = df['Electronegativity']  # Assuming Electronegativity as target for demonstration
 
-# Split the dataset
+X = df.drop(columns=['Dopant Element'])
+y = df['Electronegativity']  
+
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Define the KNN model with hyperparameters
 knn = KNeighborsRegressor(n_neighbors=6, weights='uniform', algorithm='auto')
 
-# Train the KNN model
 knn.fit(X_train, y_train)
 
-# Predict with KNN
 y_train_pred_knn = knn.predict(X_train)
 y_test_pred_knn = knn.predict(X_test)
 
-# Calculate MSE for KNN
 mse_EO_knn_train = mean_squared_error(y_train, y_train_pred_knn)
 mse_EO_knn_test = mean_squared_error(y_test, y_test_pred_knn)
 
-# Define the GBR model with hyperparameters
 gbr = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1, max_depth=3, random_state=42)
-# Train the GBR model
+
 gbr.fit(X_train, y_train)
 
-# Predict with GBR
 y_train_pred_gbr = gbr.predict(X_train)
 y_test_pred_gbr = gbr.predict(X_test)
 
-# Calculate MSE for GBR
+
 mse_EO_gbr_train = mean_squared_error(y_train, y_train_pred_gbr)
 mse_EO_gbr_test = mean_squared_error(y_test, y_test_pred_gbr)
 
-# Add the calculated EO and EC values to the DataFrame
 df['EO_KNN'] = pd.Series(y_test_pred_knn, index=X_test.index)
 df['EC_GBR'] = pd.Series(y_test_pred_gbr, index=X_test.index)
 
-# Compute the correlation matrix, excluding the 'Dopant Element' column
 corr_matrix = df.drop(columns=['Dopant Element']).corr()
 
-# Generate the heatmap
-plt.figure(figsize=(12, 5))
+plt.figure(figsize=(9, 4))
 sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', linewidths=0.5)
 plt.title('Correlation Heatmap of Dopant Element Properties with EO and EC')
 plt.show()
