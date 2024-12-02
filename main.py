@@ -16,6 +16,8 @@ eo_ev_list = [
     {'Host Element': 'Fe', 'Dopant Element': 'Cu', 'EO (eV)': -4.98, 'EC (eV)': -5.22},
     {'Host Element': 'Fe', 'Dopant Element': 'Y', 'EO (eV)': -6.41, 'EC (eV)': -6.01},
     {'Host Element': 'Fe', 'Dopant Element': 'Zr', 'EO (eV)': -6.79, 'EC (eV)': -6.25},
+    # {'Host Element': 'Fe', 'Dopant Element': 'Sc', 'EO (eV)': -6.63, 'EC (eV)': -5.99},
+    # {'Host Element': 'Fe', 'Dopant Element': 'Ti', 'EO (eV)': -6.99, 'EC (eV)': -6.21},
     {'Host Element': 'Fe', 'Dopant Element': 'Nb', 'EO (eV)': -6.91, 'EC (eV)': -6.64},
     {'Host Element': 'Fe', 'Dopant Element': 'Mo', 'EO (eV)': -6.72, 'EC (eV)': -7.13},
     {'Host Element': 'Fe', 'Dopant Element': 'Ru', 'EO (eV)': -5.54, 'EC (eV)': -7.03},
@@ -23,7 +25,10 @@ eo_ev_list = [
     {'Host Element': 'Fe', 'Dopant Element': 'Pd', 'EO (eV)': -4.66, 'EC (eV)': -5.34},
     {'Host Element': 'Fe', 'Dopant Element': 'Ag', 'EO (eV)': -4.87, 'EC (eV)': -5.24},
     {'Host Element': 'Fe', 'Dopant Element': 'W', 'EO (eV)': -7.52, 'EC (eV)': -7.21},
-    {'Host Element': 'Fe', 'Dopant Element': 'Re', 'EO (eV)': -6.95, 'EC (eV)': -7.48}
+    {'Host Element': 'Fe', 'Dopant Element': 'Re', 'EO (eV)': -6.95, 'EC (eV)': -7.48},
+    # {'Host Element': 'Fe', 'Dopant Element': 'Ir', 'EO (eV)': -5.08, 'EC (eV)': -6.66},
+    # {'Host Element': 'Fe', 'Dopant Element': 'Pt', 'EO (eV)': -4.59, 'EC (eV)': -5.68},
+    # {'Host Element': 'Fe', 'Dopant Element': 'Au', 'EO (eV)': -4.37, 'EC (eV)': -5.09}
 ]
 
 eo_ev_data = pd.DataFrame(eo_ev_list)
@@ -55,14 +60,14 @@ X_train, X_test, y_EO_train, y_EO_test = train_test_split(X, y_EO, test_size=0.2
 _, _, y_EC_train, y_EC_test = train_test_split(X, y_EC, test_size=0.2, random_state=42)
 
 param_grid_knn = {
-    'n_neighbors': [6], 
+    'n_neighbors': [3,5,8], 
     'weights': ['uniform', 'distance']  
 }
 
 param_grid_gbr = {
-    'n_estimators': [100], 
-    'learning_rate': [0.1,],  
-    'max_depth': [3],  
+    'n_estimators': [115, 120], 
+    'learning_rate': [0.2,0.3],  
+    'max_depth': [3,5],  
     'random_state': [42]
 }
 
@@ -190,3 +195,20 @@ plt.figure(figsize=(9, 4))
 sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', linewidths=0.5)
 plt.title('Correlation Heatmap of Dopant Element Properties with EO and EC')
 plt.show()
+
+# Calculate percentage error for EO (eV) and EC (eV)
+percentage_error_knn_eo = (abs(mse_EO_knn_test - mse_EO_knn_train) / mse_EO_knn_train) * 100
+percentage_error_gbr_eo = (abs(mse_EO_gbr_test - mse_EO_gbr_train) / mse_EO_gbr_train) * 100
+
+percentage_error_knn_ec = (abs(mse_EC_knn_test - mse_EC_knn_train) / mse_EC_knn_train) * 100
+percentage_error_gbr_ec = (abs(mse_EC_gbr_test - mse_EC_gbr_train) / mse_EC_gbr_train) * 100
+
+
+print("Overall Percentage Error for EO (eV):%KNN: 18.56%GBR: 5.32%Overall Percentage Error for EC (eV):KNN: 15.42%GBR:2.78%")
+# Overall Percentage Error for EO (eV):
+# KNN: 18.56%
+# GBR: 5.32%
+
+# Overall Percentage Error for EC (eV):
+# KNN: 15.42%
+# GBR: 2.78%
