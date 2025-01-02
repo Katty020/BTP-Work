@@ -1,6 +1,5 @@
 import pandas as pd
 
-# Provided data
 data = {
     "Model": ["KNN"] * 8 + ["GBR"] * 24,
     "Param": [
@@ -65,10 +64,8 @@ data = {
     ]
 }
 
-# Create DataFrame
 df = pd.DataFrame(data)
 
-# Save to Excel
 file_name = 'model_performance.xlsx'
 df.to_excel(file_name, index=False)
 
